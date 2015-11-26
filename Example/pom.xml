@@ -30,6 +30,7 @@
                     <mainClass>com.maruku.example.scanner.PackageScanner</mainClass>
                     <arguments>
                         <argument>com.maruku.example</argument>
+                        <argument>stories</argument>
                     </arguments>
                 </configuration>
                 <dependencies>

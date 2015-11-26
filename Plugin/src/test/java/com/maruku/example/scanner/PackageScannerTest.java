@@ -3,6 +3,7 @@ package com.maruku.example.scanner;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -22,5 +23,9 @@ public class PackageScannerTest {
         Assert.assertTrue(classes.size() > 1);
     }
 
-
+    @Test
+    public void testStory() throws Exception {
+        List<File> files = PackageScanner.findStories("stories", PackageScanner.TYPE.MAIN);
+        Assert.assertTrue(files.size() == 1);
+    }
 }

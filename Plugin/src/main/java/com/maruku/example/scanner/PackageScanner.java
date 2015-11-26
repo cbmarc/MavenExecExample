@@ -18,6 +18,7 @@ public final class PackageScanner {
     private final static char DOT = '.';
     private final static char SLASH = '/';
     private final static String CLASS_SUFFIX = ".class";
+    private final static String STORY_SUFFIX = ".story";
     private final static String BAD_PACKAGE_ERROR = "Unable to get resources from path '%s'. Are you sure the given '%s' package exists?";
     public static final String TARGET = "target/";
 
@@ -29,9 +30,15 @@ public final class PackageScanner {
     public static void main(String[] args) {
         if (args.length > 1) {
             String packageName = args[0];
+            String storiesDir = args[1];
             List<Class<?>> classes = find(packageName, TYPE.MAIN);
             for (Class<?> cls : classes) {
                 LOG.info(cls.getName());
+            }
+            List<File> stories = findStories(storiesDir, TYPE.MAIN);
+            for (File f : stories) {
+                LOG.info(f.getName());
+                f.
             }
         }
     }
@@ -84,4 +91,44 @@ public final class PackageScanner {
         return classes;
     }
 
+    private static List<File> findStories(final File file, final String scannedPackage) {
+        final List<File> files = new LinkedList<File>();
+        if (file.isDirectory()) {
+            for (File nestedFile : file.listFiles()) {
+                files.addAll(findStories(nestedFile, scannedPackage));
+            }
+            //File names with the $1, $2 holds the anonymous inner classes, we are not interested on them.
+        } else if (file.getName().endsWith(STORY_SUFFIX) && !file.getName().contains("$")) {
+            files.add(file);
+        }
+        return files;
+    }
+
+    public static List<File> findStories(String directory, TYPE type) {
+        final ClassLoader classLoader = PackageScanner.class.getClassLoader();
+        final String scannedPackage = directory;
+        final String scannedPath = scannedPackage.replace(DOT, SLASH);
+        final Enumeration<URL> resources;
+        try {
+            resources = classLoader.getResources(scannedPath);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(String.format(BAD_PACKAGE_ERROR, scannedPath, scannedPackage), e);
+        }
+        final List<File> files = new LinkedList<File>();
+        List<String> paths = new ArrayList<String>();
+        while (resources.hasMoreElements()) {
+            String path = resources.nextElement().getPath();
+            path = path.substring(0, path.indexOf(TARGET) + TARGET.length());
+            path = path + (type == TYPE.TEST ? "test-classes" : "classes") + SLASH;
+            if (!paths.contains(path)) {
+                paths.add(path);
+            }
+        }
+        for (String path : paths) {
+            File file = new File(path);
+            System.out.println("PATH " + file.getAbsolutePath());
+            files.addAll(findStories(file, scannedPackage));
+        }
+        return files;
+    }
 }
